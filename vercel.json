@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/index.py": {
-      "excludeFiles": "{scipy/**,scipy-*.dist-info/**,node_modules/**}"
+      "excludeFiles": "{pandas/tests/**,scipy/**,scipy.libs/**,scipy-*.dist-info/**,node_modules/**}"
     }
   },
   "rewrites": [{ "source": "/", "destination": "/api/index" }]
