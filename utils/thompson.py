@@ -20,7 +20,7 @@ class ThompsonSampling:
             cur_means = [np.random.triangular(0,mode[i], 1) for i in range(self.n_arms)]
         elif self.dist == 'normal':
             mean = (self.prior_success + self.observed_success)/ (self.prior_success + self.observed_success+ self.prior_fails + self.observed_failure)
-            var = 1/(self.prior_success + self.observed_success+ self.prior_fails + self.observed_failure)
+            var = np.exp(-1/(self.prior_success + self.observed_success + self.prior_fails + self.observed_failure))
             cur_means  = np.clip([np.random.normal(loc=mean[i],scale=var[i]) for i in range(self.n_arms)], 0,1)
 
         return np.argmax(cur_means)
@@ -34,7 +34,7 @@ class ThompsonSampling:
         self.arm_pulled[arm] += 1
 
     def get_sample_means(self):
-        sample_means = (self.observed_success)/ (self.observed_success + self.observed_failure )
+        sample_means = (self.observed_success)/ (self.observed_success + self.observed_failure + 1)
         return sample_means
 
     def prior_sample_means(self):

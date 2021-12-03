@@ -22,7 +22,7 @@ for prior_idx in big_prior_idx:
     prior_succ = np.round(prior_means * 100)
     prior_fail = np.round((1 - prior_means) * 100)
 
-    exp = Experiment(num_arms=true_means.shape[0], true_means=true_means, prior_succ=prior_succ, prior_fail=prior_fail, dist='beta',
+    exp = Experiment(num_arms=true_means.shape[0], true_means=true_means, prior_succ=prior_succ, prior_fail=prior_fail, dist='normal',
                  trials=10000)
 
     results[prior_idx] = exp.run_experiment()

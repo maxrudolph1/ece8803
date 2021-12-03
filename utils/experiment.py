@@ -26,17 +26,16 @@ class Experiment:
         for i in range(self.trials):
             arm = self.thomp.select_arm()
             rew = self.sample_reward(arm)
-
             if rew == 1:
                 self.thomp.register_success(arm)
             else:
                 self.thomp.register_failure(arm)
 
             regret[i] = self.get_regret()
-
         return {'regret': regret,
                 'sample_means': self.thomp.get_sample_means(),
                 'opt_arm': np.argmax(self.thomp.get_sample_means()),
-                'N_pulled': self.thomp.arm_pulled() }
+                'true_opt_arm': np.argmax(self.true_means),
+                'N_pulled': self.thomp.arm_pulled }
 
             
