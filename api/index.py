@@ -1,8 +1,12 @@
 import os.path
 import random
 import sys
+import tempfile
 from http.server import BaseHTTPRequestHandler
+from pathlib import Path
 from urllib.parse import parse_qs
+
+import caption_contest_data._api as caption_contest_data_api
 from caption_contest_data import summary as get_summary
 from chevron import render
 from google.cloud.firestore import Increment, SERVER_TIMESTAMP
@@ -25,6 +29,18 @@ SCORE_UPDATES = {
     '1': 'somewhat_funny',
     '2': 'funny',
 }
+
+
+def without_ccd_cache(ccd_func):
+    def wrapper(*args, **kwargs):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            caption_contest_data_api._root = Path(temp_dir)
+            return ccd_func(*args, **kwargs)
+    return wrapper
+
+
+get_summary = without_ccd_cache(get_summary)
+
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
