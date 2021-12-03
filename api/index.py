@@ -90,7 +90,6 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write(render(f, data).encode('utf-8'))
 
     def do_POST(self):
-        client_ip, client_port = self.client_address
         content_len = int(self.headers.get('Content-Length', 0))
         body = self.rfile.read(content_len)
 
@@ -114,7 +113,7 @@ class handler(BaseHTTPRequestHandler):
             'contest_id': contest_ndx,
             'caption_id': caption_ndx,
             'score': score,
-            'ip_address': client_ip,
+            'ip_address': self.headers.get('X-Forwarded-For', ''),
             'timestamp': SERVER_TIMESTAMP,
         })
         db.collection(CONTESTS_COLLECTION).document(contest_ndx).update({
