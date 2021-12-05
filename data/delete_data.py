@@ -8,7 +8,7 @@ from utils.firebase import firestore
 COLLECTIONS = (
     'meta',
     'contests',
-    'votes',
+    'users',
 )
 
 
