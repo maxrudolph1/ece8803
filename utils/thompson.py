@@ -2,12 +2,17 @@ import numpy as np
 
 
 class ThompsonSampling:
-    def __init__(self, n_arms, prior_success, prior_fails, dist='beta'):
+    def __init__(self, n_arms, prior_success, prior_failure,
+                 observed_success=None, observed_failure=None, dist='beta'):
         self.n_arms = n_arms
         self.prior_success = np.array(prior_success)
-        self.prior_fails = np.array(prior_fails)
-        self.observed_success = np.zeros((self.n_arms))
-        self.observed_failure = np.zeros((self.n_arms))
+        self.prior_fails = np.array(prior_failure)
+        self.observed_success = (np.zeros((self.n_arms,))
+                                 if observed_success is None
+                                 else np.array(observed_success))
+        self.observed_failure = (np.zeros((self.n_arms,))
+                                 if observed_failure is None
+                                 else np.array(observed_failure))
         self.arm_pulled = np.zeros((self.n_arms))
         self.means = np.zeros((self.n_arms,))
         self.dist = dist
