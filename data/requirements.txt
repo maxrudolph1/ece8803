@@ -2,7 +2,7 @@ CacheControl==0.12.10
 cachetools==4.2.4
 caption-contest-data==0.1.0
 certifi==2021.10.8
-charset-normalizer==2.0.8
+charset-normalizer==2.0.9
 firebase-admin==5.1.0
 google-api-core==2.2.2
 google-api-python-client==2.32.0
