@@ -16,20 +16,28 @@ class ThompsonSampling:
         if self.dist == 'beta':
             cur_means = [np.random.beta(self.prior_success[i] + self.observed_success[i], self.prior_fails[i] + self.observed_failure[i]) for i in range(self.n_arms)]
         elif self.dist == 'triangle':
+            
             mode = (self.prior_success + self.observed_success)/ (self.prior_success + self.observed_success+ self.prior_fails + self.observed_failure) 
-            cur_means = [np.random.triangular(0,mode[i], 1) for i in range(self.n_arms)]
+            var = np.exp(-0.01*(self.prior_success + self.observed_success + self.prior_fails + self.observed_failure))
+            cur_means = [np.random.triangular(mode[i] - var[i],mode[i], mode[i] + var[i]) for i in range(self.n_arms)]
         elif self.dist == 'normal':
+
             mean = (self.prior_success + self.observed_success)/ (self.prior_success + self.observed_success+ self.prior_fails + self.observed_failure)
-            var = np.exp(-1/(self.prior_success + self.observed_success + self.prior_fails + self.observed_failure))
+            var = np.exp(-0.01*(self.prior_success + self.observed_success + self.prior_fails + self.observed_failure))
             cur_means  = np.clip([np.random.normal(loc=mean[i],scale=var[i]) for i in range(self.n_arms)], 0,1)
 
         return np.argmax(cur_means)
 
-    def register_success(self, arm):
+    def register_funny(self, arm):
         self.observed_success[arm] += 1
         self.arm_pulled[arm] += 1
 
-    def register_failure(self, arm):
+    def register_somewhat(self, arm):
+        self.observed_success[arm] += 0.5
+        self.observed_failure[arm] += 0.5
+        self.arm_pulled[arm] += 1
+
+    def register_unfunny(self, arm):
         self.observed_failure[arm] += 1
         self.arm_pulled[arm] += 1
 

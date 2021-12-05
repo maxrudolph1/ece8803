@@ -7,7 +7,7 @@ big_prior_idx = np.array([554, 564, 568, 570, 573, 575, 578, 580, 583, 585, 587,
                           598, 602, 604, 607, 609, 611, 613, 615, 617, 619, 621, 624, 626,
                           628, 630, 632, 634, 662, 665, 667, 669, 671, 673, 675, 677, 679,
                           681, 683, 685, 687, 689, 691])
-big_prior_idx = big_prior_idx[:2]
+big_prior_idx = big_prior_idx[:10]
 
 
 
@@ -15,19 +15,34 @@ results = {}
 
 for prior_idx in big_prior_idx:
 
-    df = ccd.summary(prior_idx).query('rank <= 10')
-    true_means = np.array(df['funny']) / (np.array(df['funny']) + np.array(df['unfunny'])) 
-    prior_means = np.array(df['funny']) / (np.array(df['funny']) + np.array(df['unfunny'])) + \
-                    np.array([np.random.triangular(-np.min(true_means), 0, (1 - np.max(true_means))) for i in range(10)])
-    prior_succ = np.round(prior_means * 100)
-    prior_fail = np.round((1 - prior_means) * 100)
+    df = ccd.summary(prior_idx).query('rank == 1 or rank == 5 or rank == 10')
+    priors = (np.array(df['funny']) + np.array(df['somewhat_funny']) * 0.5) / \
+        (np.array(df['funny']) + np.array(df['unfunny'] + np.array(df['somewhat_funny']))) 
 
-    exp = Experiment(num_arms=true_means.shape[0], true_means=true_means, prior_succ=prior_succ, prior_fail=prior_fail, dist='beta',
-                 trials=10000)
+
+    true_funny = np.array(df['funny']) / \
+        (np.array(df['funny']) + np.array(df['unfunny'] + np.array(df['somewhat_funny']))) 
+
+    true_unfunny = np.array(df['unfunny']) / \
+        (np.array(df['funny']) + np.array(df['unfunny'] + np.array(df['somewhat_funny']))) 
+
+    true_somewhat = np.array(df['somewhat_funny']) / \
+        (np.array(df['funny']) + np.array(df['unfunny'] + np.array(df['somewhat_funny']))) 
+
+    prior_succ = np.round(priors * 10)
+    prior_fail = np.round((1 - priors) * 10)
+
+    exp = Experiment(num_arms=priors.shape[0],
+                    true_funny = true_funny, 
+                    true_unfunny = true_unfunny,
+                    true_somewhat = true_somewhat,
+                    prior_succ=prior_succ,
+                    prior_fail=prior_fail, 
+                    dist='triangle',
+                    trials=1000)
 
     results[prior_idx] = exp.run_experiment()
     
-
 
 for res in results.keys():
     print('---------------------')
@@ -35,6 +50,9 @@ for res in results.keys():
     print(results[res]['true_opt_arm'])
     print(results[res]['sample_means'])
     print(results[res]['N_pulled'])
+    
+    plt.figure()
+    plt.plot((results[res]['regret']))
 
 plt.show(block=False)
 plt.pause(0.001) # Pause for interval seconds.
