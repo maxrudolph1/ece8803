@@ -12,8 +12,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from utils.firebase import firestore
 from utils.thompson import ThompsonSampling
 
-# Thompson sampling prior discount factor
-PRIOR_DISCOUNT = 0.1
+# What to normalize Thompson sampling priors to
+NORMALIZE_PRIORS_TO = 2.0
 
 # Where Mustache templates are stored
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), '..', 'templates')
@@ -50,25 +50,29 @@ class handler(BaseHTTPRequestHandler):
             prior_funny,
             prior_somewhat_funny,
             prior_unfunny,
+            prior_count,
             observed_funny,
             observed_somewhat_funny,
             observed_unfunny,
+            observed_count,
         ) = (
             np.array([summary[str(i)][column] for i in range(n_arms)])
             for column in (
                 'prior_funny',
                 'prior_somewhat_funny',
                 'prior_unfunny',
+                'prior_count',
                 'observed_funny',
                 'observed_somewhat_funny',
                 'observed_unfunny',
+                'observed_count',
             )
         )
 
         prior_success = ((prior_funny + (prior_somewhat_funny * 0.5))
-                         * PRIOR_DISCOUNT + 1)
+                         * NORMALIZE_PRIORS_TO / np.sum(prior_count) + 1)
         prior_failure = ((prior_unfunny + (prior_somewhat_funny * 0.5))
-                         * PRIOR_DISCOUNT + 1)
+                         * NORMALIZE_PRIORS_TO / np.sum(prior_count) + 1)
         observed_success = observed_funny + (observed_somewhat_funny * 0.5)
         observed_failure = observed_unfunny + (observed_somewhat_funny * 0.5)
 

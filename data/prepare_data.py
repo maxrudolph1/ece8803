@@ -2,7 +2,7 @@ import itertools
 import os
 import re
 import sys
-from typing import Dict, Union
+from typing import Dict, Tuple, Union
 
 import pandas as pd
 from caption_contest_data import summary as get_summary, summary_ids
@@ -77,19 +77,14 @@ def get_comic(contest: Union[int, str]) -> Dict[str, Union[str, int]]:
 def main():
     '''Write caption contest data to Firestore.'''
 
-    db = firestore()
-    collection = db.collection(OUTPUT_COLLECTION)
-
     contests_by_id = {}
     for contest in summary_ids():
         if contest not in EXCLUSIONS:
             contest_id = get_contest_id(contest)
             contests_by_id.setdefault(contest_id, []).append(contest)
 
-    batch = db.batch()
-    it = enumerate(zip(contests_by_id.items(), itertools.cycle(ALGORITHMS)))
-    it_len = len(contests_by_id)
-    for i, ((contest_id, contests), algorithm) in tqdm(it, total=it_len):
+    summaries = {}
+    for i, (contest_id, contests) in enumerate(tqdm(contests_by_id.items())):
         df = pd.concat(get_summary(contest) for contest in contests)
         df = df[['funny', 'somewhat_funny', 'unfunny', 'count', 'caption']]
         groupby = df.groupby('caption')
@@ -116,18 +111,32 @@ def main():
             'observed_count',
         ]] = 0
 
+        summaries[contest_id] = df
+
+    def sort_key(pair: Tuple[int, pd.DataFrame]) -> float:
+        '''Sort by total prior count, ascending.'''
+        contest_id, summary = pair
+        return summary['prior_count'].sum()
+    summaries = sorted(summaries.items(), key=sort_key)[:NUM_CONTESTS]
+
+    db = firestore()
+    collection = db.collection(OUTPUT_COLLECTION)
+    batch = db.batch()
+    it = enumerate(zip(summaries, itertools.cycle(ALGORITHMS)))
+
+    for i, ((contest_id, summary), algorithm) in it:
         batch.set(collection.document(str(i)), {
             'contest_id': contest_id,
             'comic': get_comic(contest_id),
-            'summary': df.to_dict(orient='index'),
+            'summary': summary.to_dict(orient='index'),
             'algorithm': algorithm,
         })
 
     batch.set(db.document(*METADATA_DOCUMENT_PATH), {
-        'num_contests': len(contests_by_id),
+        'num_contests': len(summaries),
     })
 
-    print(f'Writing {len(contests_by_id)} contests to Firestore...')
+    print(f'Writing {len(summaries)} contests to Firestore...')
     batch.commit()
     print('Done!')
 
